@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="{{ 'img/LOGO-QUANTUM.png' }}" type="image/x-icon">
-    <title>Penilaian Siswa | {{ $title ?? '' }}</title>
+    <title>{{ $title ?? '' }} | Penilaian Siswa</title>
     <style>
         * {
             margin: 0;
@@ -75,7 +75,7 @@
             font-size: 1.2em;
         }
 
-         /* Logout button */
+        /* Logout button */
         .logout-section {
             padding: 20px;
             border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -133,8 +133,14 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .page-title {
@@ -321,29 +327,34 @@
         .desktop-only-overlay {
             display: none;
         }
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
             }
-            
+
             .sidebar {
                 width: 100%;
                 order: 2;
             }
-            
+
             .main-content {
                 order: 1;
             }
-            
+
             .stats-grid {
                 grid-template-columns: 1fr;
             }
+
             .desktop-only-overlay {
                 display: flex;
                 position: fixed;
                 z-index: 9999;
-                top: 0; left: 0; right: 0; bottom: 0;
-                background: rgba(30,30,30,0.92);
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(30, 30, 30, 0.92);
                 align-items: center;
                 justify-content: center;
                 color: #fff;
@@ -356,28 +367,18 @@
     </style>
 </head>
 <body>
-    <div class="desktop-only-overlay">
-        Mohon maaf, aplikasi ini hanya dapat digunakan pada layar desktop atau tablet dengan resolusi lebar.<br>
-        Silakan akses menggunakan komputer/laptop untuk pengalaman terbaik.
-    </div>
-    <div class="container">
-        <!-- Sidebar -->
-        <x-sidebar></x-sidebar>
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Home Section -->
-            {{ $slot }}
+<div class="desktop-only-overlay">
+    Mohon maaf, aplikasi ini hanya dapat digunakan pada layar desktop atau tablet dengan resolusi lebar.<br>
+    Silakan akses menggunakan komputer/laptop untuk pengalaman terbaik.
+</div>
+<div class="container">
+    <!-- Sidebar -->
+    <x-sidebar></x-sidebar>
+    <!-- Main Content -->
+    <main class="main-content">
+        {{ $slot }}
+    </main>
+</div>
 
-            <!-- Data Siswa Section -->
-            
-
-            <!-- Penilaian Section -->
-            
-
-            <!-- Laporan Section -->
-            
-        </main>
-    </div>
-   
 </body>
 </html>

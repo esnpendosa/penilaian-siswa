@@ -29,19 +29,21 @@ class PenilaianSiswaController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function stores(Request $request){
+    public function stores(Request $request)
+    {
         dd($request->all());
     }
+
     public function store(Request $request)
     {
-        $validated = $request->validate([  
-        'nama_siswa' =>  'required',     
-        'jenis' => 'required|in:prestasi,pelanggaran',
-        'kategori' => 'required',
-        'keterangan' => 'required|string|max:255',
-        'poin' => 'required|integer|min:1|max:100',
-        'tanggal' => 'required|date',
-        ], [                             
+        $validated = $request->validate([
+            'nama_siswa' => 'required',
+            'jenis' => 'required|in:prestasi,pelanggaran',
+            'kategori' => 'required',
+            'keterangan' => 'required|string|max:255',
+            'poin' => 'required|integer|min:1|max:100',
+            'tanggal' => 'required|date',
+        ], [
             'nama_siswa.required' => 'Siswa harus dipilih.',
             'jenis.required' => 'Jenis penilaian harus dipilih.',
             'jenis.in' => 'Jenis penilaian tidak valid.',
@@ -50,9 +52,9 @@ class PenilaianSiswaController extends Controller
             'keterangan.required' => 'Keterangan wajib diisi.',
             'keterangan.max' => 'Keterangan maksimal 255 karakter.',
             'poin.required' => 'Kolom poin wajib diisi.',
-            'poin.integer'  => 'Poin harus berupa angka bulat.',
-            'poin.min'      => 'Poin minimal adalah 1.',
-            'poin.max'      => 'Poin maksimal adalah 100.',
+            'poin.integer' => 'Poin harus berupa angka bulat.',
+            'poin.min' => 'Poin minimal adalah 1.',
+            'poin.max' => 'Poin maksimal adalah 100.',
             'tanggal.required' => 'Tanggal wajib diisi.',
             'tanggal.date' => 'Format tanggal tidak valid.',
         ]);
@@ -97,8 +99,8 @@ class PenilaianSiswaController extends Controller
     public function destroy($id)
     {
         $data = PenilaianSiswa::findOrFail($id);
-        $data ->delete();
-        
+        $data->delete();
+
         return redirect()->back()->with('success', 'Data berhasil dihapus');
     }
 }

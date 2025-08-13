@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\DataSiswa;
 use App\Models\PenilaianSiswa;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LaporanSiswaController extends Controller
@@ -16,29 +18,63 @@ class LaporanSiswaController extends Controller
     {
         $kelasFilter = $request->query('kelas');
         $totalSiswa = PenilaianSiswa::count();
+        $jmlPrestasi = [];
+        $jmlMasalah = [];
+        $dataSiswa = [];
+
+//        $query = DB::table('penilaian_siswa')
+//            ->join('data_siswa', 'penilaian_siswa.siswa_id', '=', 'data_siswa.id')
+//            ->select('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas',
+//                DB::raw("
+//                    SUM(CASE WHEN penilaian_siswa.jenis = 'prestasi' THEN penilaian_siswa.poin ELSE 0 END)
+//                    -
+//                    SUM(CASE WHEN penilaian_siswa.jenis = 'pelanggaran' THEN penilaian_siswa.poin ELSE 0 END)
+//                    AS total_poin
+//                "),
+//                DB::raw("SUM(penilaian_siswa.jenis = 'prestasi') as total_prestasi"),
+//                DB::raw("SUM(penilaian_siswa.jenis = 'pelanggaran') as total_pelanggaran"),
+//            )
+//            ->groupBy('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas');
+//        if ($kelasFilter) {
+//            $query->where('data_siswa.kelas', $kelasFilter);
+//        }
+
         $query = DB::table('penilaian_siswa')
             ->join('data_siswa', 'penilaian_siswa.siswa_id', '=', 'data_siswa.id')
-            ->select('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas', 
-                DB::raw("
-                    SUM(CASE WHEN penilaian_siswa.jenis = 'prestasi' THEN penilaian_siswa.poin ELSE 0 END)
-                    -
-                    SUM(CASE WHEN penilaian_siswa.jenis = 'pelanggaran' THEN penilaian_siswa.poin ELSE 0 END)
-                    AS total_poin
-                "),
-                DB::raw("SUM(penilaian_siswa.jenis = 'prestasi') as total_prestasi"),
-                DB::raw("SUM(penilaian_siswa.jenis = 'pelanggaran') as total_pelanggaran"),
+            ->select(
+                'data_siswa.id',
+                'data_siswa.nama',
+                'data_siswa.kelas',
+                DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "prestasi" THEN penilaian_siswa.poin ELSE 0 END) - SUM(CASE WHEN penilaian_siswa.jenis = "pelanggaran" THEN penilaian_siswa.poin ELSE 0 END) AS total_poin'),
+                DB::raw('SUM(penilaian_siswa.jenis = "prestasi") as total_prestasi'),
+                DB::raw('SUM(penilaian_siswa.jenis = "pelanggaran") as total_pelanggaran')
             )
             ->groupBy('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas');
+
         if ($kelasFilter) {
             $query->where('data_siswa.kelas', $kelasFilter);
         }
-        $dataSiswa = $query->orderByDesc('total_poin')->get();
-        $jmlPrestasi = PenilaianSiswa::where('jenis','prestasi')->count();
-        $jmlMasalah = PenilaianSiswa::where('jenis','pelanggaran')->count();
+        if (Auth::user()->role === 'siswa') {
+            $siswaId = Auth::user()->siswa->id;
+            $query->where('data_siswa.id', $siswaId);
+        }
+
+        if (Auth::user()->role === 'siswa') {
+            $siswaId = Auth::user()->siswa->id;
+            $jmlPrestasi = PenilaianSiswa::query()->where(['jenis' => 'prestasi', 'siswa_id' => $siswaId])->count();
+            $jmlMasalah = PenilaianSiswa::query()->where(['jenis' => 'pelanggaran', 'siswa_id' => $siswaId])->count();
+            $dataSiswa = $query->orderByDesc('total_poin')->get();
+        } else {
+            $jmlPrestasi = PenilaianSiswa::where('jenis', 'prestasi')->count();
+            $jmlMasalah = PenilaianSiswa::where('jenis', 'pelanggaran')->count();
+            $dataSiswa = $query->orderByDesc('total_poin')->get();
+        }
+
+
         $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;
         $presentaseMasalah = $totalSiswa > 0 ? ($jmlMasalah / $totalSiswa) * 100 : 0;
         return view('laporan', compact(
-            'presentasePrestasi', 
+            'presentasePrestasi',
             'presentaseMasalah',
             'jmlPrestasi',
             'jmlMasalah',
@@ -57,7 +93,7 @@ class LaporanSiswaController extends Controller
         $totalSiswa = PenilaianSiswa::count();
         $query = DB::table('penilaian_siswa')
             ->join('data_siswa', 'penilaian_siswa.siswa_id', '=', 'data_siswa.id')
-            ->select('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas', 
+            ->select('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas',
                 DB::raw("
                     SUM(CASE WHEN penilaian_siswa.jenis = 'prestasi' THEN penilaian_siswa.poin ELSE 0 END)
                     -
@@ -72,12 +108,12 @@ class LaporanSiswaController extends Controller
             $query->where('data_siswa.kelas', $kelasFilter);
         }
         $dataSiswa = $query->orderByDesc('total_poin')->get();
-        $jmlPrestasi = PenilaianSiswa::where('jenis','prestasi')->count();
-        $jmlMasalah = PenilaianSiswa::where('jenis','pelanggaran')->count();
+        $jmlPrestasi = PenilaianSiswa::where('jenis', 'prestasi')->count();
+        $jmlMasalah = PenilaianSiswa::where('jenis', 'pelanggaran')->count();
         $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;
         $presentaseMasalah = $totalSiswa > 0 ? ($jmlMasalah / $totalSiswa) * 100 : 0;
         return view('laporan_pdf', compact(
-            'presentasePrestasi', 
+            'presentasePrestasi',
             'presentaseMasalah',
             'jmlPrestasi',
             'jmlMasalah',

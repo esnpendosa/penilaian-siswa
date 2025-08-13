@@ -21,4 +21,9 @@ class PenilaianSiswa extends Model
         'keterangan',
         'poin',
     ];
+
+    public function siswa()
+    {
+        return $this->belongsTo(DataSiswa::class, 'siswa_id');
+    }
 }
