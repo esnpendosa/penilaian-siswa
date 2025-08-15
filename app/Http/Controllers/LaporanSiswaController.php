@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DataSiswa;
 use App\Models\PenilaianSiswa;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -63,12 +61,11 @@ class LaporanSiswaController extends Controller
             $siswaId = Auth::user()->siswa->id;
             $jmlPrestasi = PenilaianSiswa::query()->where(['jenis' => 'prestasi', 'siswa_id' => $siswaId])->count();
             $jmlMasalah = PenilaianSiswa::query()->where(['jenis' => 'pelanggaran', 'siswa_id' => $siswaId])->count();
-            $dataSiswa = $query->orderByDesc('total_poin')->get();
         } else {
             $jmlPrestasi = PenilaianSiswa::where('jenis', 'prestasi')->count();
             $jmlMasalah = PenilaianSiswa::where('jenis', 'pelanggaran')->count();
-            $dataSiswa = $query->orderByDesc('total_poin')->get();
         }
+        $dataSiswa = $query->orderByDesc('total_poin')->get();
 
 
         $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;

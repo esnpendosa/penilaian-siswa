@@ -37,6 +37,15 @@
                 </x-sidelink>
             </li>
         @endif
+        @if($role === 'admin')
+            <li class="nav-item">
+                <x-sidelink href="{{ route('users.index') }}" :active="request()->is('users.index')"
+                            data-section="users">
+                    <span class="nav-icon">📊</span>
+                    Pengguna
+                </x-sidelink>
+            </li>
+        @endif
     </ul>
     <div class="logout-section">
         <button class="logout-btn" onclick="logout()">
