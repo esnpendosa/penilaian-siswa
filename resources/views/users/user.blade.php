@@ -58,7 +58,7 @@
                             <option value="guru" {{ old('role') == 'guru' ? 'selected' : '' }}>Guru</option>
                             <option value="kepsek" {{ old('role') == 'kepsek' ? 'selected' : '' }}>Kepala Sekolah
                             </option>
-                            <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>Siswa</option>
+                            {{--                            <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>Siswa</option>--}}
                         </select>
                         @error('role')
                         <small style="color: red;">{{ $message }}</small>

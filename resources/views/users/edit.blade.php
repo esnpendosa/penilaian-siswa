@@ -45,8 +45,9 @@
                             <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="guru_bk" {{ $user->role == 'guru_bk' ? 'selected' : '' }}>Guru BK</option>
                             <option value="guru" {{ $user->role == 'guru' ? 'selected' : '' }}>Guru</option>
-                            <option value="kepsek" {{ $user->role == 'kepsek'?  'selected' : '' }}>Guru BK</option>
-                            <option value="siswa" {{ $user->role == 'siswa' ?'selected' : '' }}>Siswa</option>
+                            <option value="kepsek" {{ $user->role == 'kepsek'?  'selected' : '' }}>Kepala Sekolah
+                            </option>
+                            {{--                            <option value="siswa" {{ $user->role == 'siswa' ?'selected' : '' }}>Siswa</option>--}}
                         </select>
                     </div>
 

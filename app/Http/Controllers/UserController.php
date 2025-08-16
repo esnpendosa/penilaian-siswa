@@ -31,7 +31,7 @@ class UserController extends Controller
             'username' => 'required|string|max:255|unique:users,username',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:admin,siswa,guru,kepsek,guru_bk',
+            'role' => 'required|in:admin,guru,kepsek,guru_bk',
         ]);
 
         $user = User::create([
@@ -43,15 +43,15 @@ class UserController extends Controller
 
         ]);
 
-        if ($user->role === 'siswa') {
-            Datasiswa::create([
-                'nama' => $user->name,
-                'nis' => 0,
-                'kelas' => 'X',
-                'status' => '1',
-                'user_id' => $user->id,
-            ]);
-        }
+//        if ($user->role === 'siswa') {
+//            Datasiswa::create([
+//                'nama' => $user->name,
+//                'nis' => 0,
+//                'kelas' => 'X',
+//                'status' => '1',
+//                'user_id' => $user->id,
+//            ]);
+//        }
 
         return redirect()->route('users.index')->with('success', 'Data berhasil ditambahkan');
     }
