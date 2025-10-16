@@ -56,15 +56,13 @@
                             <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="guru_bk" {{ old('role') == 'guru_bk' ? 'selected' : '' }}>Guru BK</option>
                             <option value="guru" {{ old('role') == 'guru' ? 'selected' : '' }}>Guru</option>
-                            <option value="kepsek" {{ old('role') == 'kepsek' ? 'selected' : '' }}>Kepala Sekolah
-                            </option>
-                            {{--                            <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>Siswa</option>--}}
+                            <option value="kepsek" {{ old('role') == 'kepsek' ? 'selected' : '' }}>Kepala Sekolah</option>
+                            <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>Siswa</option>
                         </select>
                         @error('role')
                         <small style="color: red;">{{ $message }}</small>
                         @enderror
                     </div>
-
 
                     <button type="submit" class="btn">Tambah Pengguna</button>
                 </form>
@@ -75,36 +73,51 @@
         <div class="table-container" style="padding-left: 10px; padding-right: 10px;">
             <h3 style="padding: 20px; margin: 0; background: #f8f9fa; border-bottom: 1px solid #e0e0e0;">Daftar
                 Pengguna</h3>
-            <table class="table" id="myTable">
-                <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Nama</th>
-                    <th>Aksi</th>
-                </tr>
-                </thead>
-                <tbody id="tabel-siswa">
-                @foreach ($users as $user)
+            <div style="overflow-x: auto;">
+                <table class="table" id="myTable">
+                    <thead>
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $user->name }}</td>
-                        <td>
-                            <button class="btn btn-success" data-id="{{ $user->id }}" onclick="editSiswa(this)">Edit
-                            </button>
-                            @if(auth()->user()->role == "admin")
-                                <form action="{{ route('users.destroy', $user->id) }}" method="POST"
-                                      onsubmit="return hapusSiswa(this)" style="display:inline;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger">Hapus</button>
-                                </form>
-                            @endif
-
-                        </td>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Aksi</th>
                     </tr>
-                @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="tabel-siswa">
+                    @foreach ($users as $user)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->username }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>
+                                <span class="badge badge-{{ 
+                                    $user->role == 'admin' ? 'danger' : 
+                                    ($user->role == 'guru_bk' ? 'primary' : 
+                                    ($user->role == 'guru' ? 'warning' : 
+                                    ($user->role == 'kepsek' ? 'success' : 'info'))) 
+                                }}">
+                                    {{ ucfirst($user->role) }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-success" data-id="{{ $user->id }}" onclick="editSiswa(this)">Edit</button>
+                                @if(auth()->user()->role == "admin")
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST"
+                                          onsubmit="return hapusSiswa(this)" style="display:inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger">Hapus</button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
     <script src="https://code.jquery.com/jquery-3.7.1.js"

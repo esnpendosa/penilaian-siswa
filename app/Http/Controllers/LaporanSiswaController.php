@@ -14,29 +14,28 @@ class LaporanSiswaController extends Controller
      */
     public function index(Request $request)
     {
+        // Cek hak akses
+        $user = Auth::user();
+        $allowedRoles = ['admin', 'guru_bk', 'guru', 'siswa'];
+        
+        if (!in_array($user->role, $allowedRoles)) {
+            return redirect('/non_admin')->with('error', 'Anda tidak memiliki akses ke halaman laporan.');
+        }
+
         $kelasFilter = $request->query('kelas');
-        $totalSiswa = PenilaianSiswa::count();
-        $jmlPrestasi = [];
-        $jmlMasalah = [];
+        
+        // Hitung total siswa (hanya untuk admin, guru_bk, guru)
+        if ($user->role === 'siswa') {
+            $totalSiswa = 1; // Untuk siswa, total siswa dianggap 1
+        } else {
+            $totalSiswa = DB::table('data_siswa')->count();
+        }
+
+        $jmlPrestasi = 0;
+        $jmlMasalah = 0;
         $dataSiswa = [];
 
-//        $query = DB::table('penilaian_siswa')
-//            ->join('data_siswa', 'penilaian_siswa.siswa_id', '=', 'data_siswa.id')
-//            ->select('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas',
-//                DB::raw("
-//                    SUM(CASE WHEN penilaian_siswa.jenis = 'prestasi' THEN penilaian_siswa.poin ELSE 0 END)
-//                    -
-//                    SUM(CASE WHEN penilaian_siswa.jenis = 'pelanggaran' THEN penilaian_siswa.poin ELSE 0 END)
-//                    AS total_poin
-//                "),
-//                DB::raw("SUM(penilaian_siswa.jenis = 'prestasi') as total_prestasi"),
-//                DB::raw("SUM(penilaian_siswa.jenis = 'pelanggaran') as total_pelanggaran"),
-//            )
-//            ->groupBy('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas');
-//        if ($kelasFilter) {
-//            $query->where('data_siswa.kelas', $kelasFilter);
-//        }
-
+        // Query untuk data siswa
         $query = DB::table('penilaian_siswa')
             ->join('data_siswa', 'penilaian_siswa.siswa_id', '=', 'data_siswa.id')
             ->select(
@@ -44,32 +43,43 @@ class LaporanSiswaController extends Controller
                 'data_siswa.nama',
                 'data_siswa.kelas',
                 DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "prestasi" THEN penilaian_siswa.poin ELSE 0 END) - SUM(CASE WHEN penilaian_siswa.jenis = "pelanggaran" THEN penilaian_siswa.poin ELSE 0 END) AS total_poin'),
-                DB::raw('SUM(penilaian_siswa.jenis = "prestasi") as total_prestasi'),
-                DB::raw('SUM(penilaian_siswa.jenis = "pelanggaran") as total_pelanggaran')
+                DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "prestasi" THEN 1 ELSE 0 END) as total_prestasi'),
+                DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "pelanggaran" THEN 1 ELSE 0 END) as total_pelanggaran')
             )
             ->groupBy('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas');
 
+        // Filter berdasarkan kelas
         if ($kelasFilter) {
             $query->where('data_siswa.kelas', $kelasFilter);
         }
-        if (Auth::user()->role === 'siswa') {
-            $siswaId = Auth::user()->siswa->id;
-            $query->where('data_siswa.id', $siswaId);
-        }
 
-        if (Auth::user()->role === 'siswa') {
-            $siswaId = Auth::user()->siswa->id;
-            $jmlPrestasi = PenilaianSiswa::query()->where(['jenis' => 'prestasi', 'siswa_id' => $siswaId])->count();
-            $jmlMasalah = PenilaianSiswa::query()->where(['jenis' => 'pelanggaran', 'siswa_id' => $siswaId])->count();
+        // Filter khusus untuk siswa
+        if ($user->role === 'siswa') {
+            $siswaId = $user->siswa->id ?? null;
+            if ($siswaId) {
+                $query->where('data_siswa.id', $siswaId);
+                
+                // Hitung jumlah prestasi dan pelanggaran untuk siswa ini
+                $jmlPrestasi = PenilaianSiswa::where(['jenis' => 'prestasi', 'siswa_id' => $siswaId])->count();
+                $jmlMasalah = PenilaianSiswa::where(['jenis' => 'pelanggaran', 'siswa_id' => $siswaId])->count();
+            }
         } else {
+            // Untuk admin, guru_bk, guru - hitung semua data
             $jmlPrestasi = PenilaianSiswa::where('jenis', 'prestasi')->count();
             $jmlMasalah = PenilaianSiswa::where('jenis', 'pelanggaran')->count();
         }
+
         $dataSiswa = $query->orderByDesc('total_poin')->get();
 
+        // Hitung presentase (hanya untuk admin, guru_bk, guru)
+        if ($user->role === 'siswa') {
+            $presentasePrestasi = 0;
+            $presentaseMasalah = 0;
+        } else {
+            $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;
+            $presentaseMasalah = $totalSiswa > 0 ? ($jmlMasalah / $totalSiswa) * 100 : 0;
+        }
 
-        $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;
-        $presentaseMasalah = $totalSiswa > 0 ? ($jmlMasalah / $totalSiswa) * 100 : 0;
         return view('laporan', compact(
             'presentasePrestasi',
             'presentaseMasalah',
@@ -78,7 +88,6 @@ class LaporanSiswaController extends Controller
             'dataSiswa',
             'kelasFilter',
         ));
-        // dd($dataSiswa);
     }
 
     /**
@@ -86,29 +95,60 @@ class LaporanSiswaController extends Controller
      */
     public function pdf(Request $request)
     {
+        // Cek hak akses untuk PDF juga
+        $user = Auth::user();
+        $allowedRoles = ['admin', 'guru_bk', 'guru', 'siswa'];
+        
+        if (!in_array($user->role, $allowedRoles)) {
+            return redirect('/non_admin')->with('error', 'Anda tidak memiliki akses ke halaman laporan.');
+        }
+
         $kelasFilter = $request->query('kelas');
-        $totalSiswa = PenilaianSiswa::count();
+        
+        if ($user->role === 'siswa') {
+            $totalSiswa = 1;
+        } else {
+            $totalSiswa = DB::table('data_siswa')->count();
+        }
+
         $query = DB::table('penilaian_siswa')
             ->join('data_siswa', 'penilaian_siswa.siswa_id', '=', 'data_siswa.id')
-            ->select('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas',
-                DB::raw("
-                    SUM(CASE WHEN penilaian_siswa.jenis = 'prestasi' THEN penilaian_siswa.poin ELSE 0 END)
-                    -
-                    SUM(CASE WHEN penilaian_siswa.jenis = 'pelanggaran' THEN penilaian_siswa.poin ELSE 0 END)
-                    AS total_poin
-                "),
-                DB::raw("SUM(penilaian_siswa.jenis = 'prestasi') as total_prestasi"),
-                DB::raw("SUM(penilaian_siswa.jenis = 'pelanggaran') as total_pelanggaran"),
+            ->select(
+                'data_siswa.id', 
+                'data_siswa.nama', 
+                'data_siswa.kelas',
+                DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "prestasi" THEN penilaian_siswa.poin ELSE 0 END) - SUM(CASE WHEN penilaian_siswa.jenis = "pelanggaran" THEN penilaian_siswa.poin ELSE 0 END) AS total_poin'),
+                DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "prestasi" THEN 1 ELSE 0 END) as total_prestasi'),
+                DB::raw('SUM(CASE WHEN penilaian_siswa.jenis = "pelanggaran" THEN 1 ELSE 0 END) as total_pelanggaran')
             )
             ->groupBy('data_siswa.id', 'data_siswa.nama', 'data_siswa.kelas');
+
         if ($kelasFilter) {
             $query->where('data_siswa.kelas', $kelasFilter);
         }
+
+        // Filter khusus untuk siswa di PDF
+        if ($user->role === 'siswa') {
+            $siswaId = $user->siswa->id ?? null;
+            if ($siswaId) {
+                $query->where('data_siswa.id', $siswaId);
+            }
+        }
+
         $dataSiswa = $query->orderByDesc('total_poin')->get();
-        $jmlPrestasi = PenilaianSiswa::where('jenis', 'prestasi')->count();
-        $jmlMasalah = PenilaianSiswa::where('jenis', 'pelanggaran')->count();
-        $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;
-        $presentaseMasalah = $totalSiswa > 0 ? ($jmlMasalah / $totalSiswa) * 100 : 0;
+        
+        if ($user->role === 'siswa') {
+            $jmlPrestasi = 0;
+            $jmlMasalah = 0;
+            $presentasePrestasi = 0;
+            $presentaseMasalah = 0;
+        } else {
+            $jmlPrestasi = PenilaianSiswa::where('jenis', 'prestasi')->count();
+            $jmlMasalah = PenilaianSiswa::where('jenis', 'pelanggaran')->count();
+            $presentasePrestasi = $totalSiswa > 0 ? ($jmlPrestasi / $totalSiswa) * 100 : 0;
+            $presentaseMasalah = $totalSiswa > 0 ? ($jmlMasalah / $totalSiswa) * 100 : 0;
+        }
+
         return view('laporan_pdf', compact(
             'presentasePrestasi',
             'presentaseMasalah',
@@ -117,6 +157,15 @@ class LaporanSiswaController extends Controller
             'dataSiswa',
             'kelasFilter',
         ));
+    }
+
+    /**
+     * PDF Download method
+     */
+    public function pdfDownload(Request $request)
+    {
+        // Implementasi download PDF jika diperlukan
+        return $this->pdf($request);
     }
 
     /**

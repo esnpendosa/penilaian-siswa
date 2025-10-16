@@ -11,7 +11,8 @@
         </li>
         @php $role = auth()->user()->role; @endphp
 
-        @if($role === 'admin' || $role === 'guru_bk')
+        {{-- Data Siswa - Hanya Admin --}}
+        @if($role === 'admin')
             <li class="nav-item">
                 <x-sidelink href="{{ route('data_siswa') }}" :active="request()->is('data_siswa')"
                             data-section="data-siswa">
@@ -19,6 +20,10 @@
                     Data Siswa
                 </x-sidelink>
             </li>
+        @endif
+
+        {{-- Penilaian - Admin, Guru BK, Guru --}}
+        @if(in_array($role, ['admin', 'guru_bk', 'guru']))
             <li class="nav-item">
                 <x-sidelink href="{{ route('penilaian_siswa') }}" :active="request()->is('penilaian_siswa')"
                             data-section="penilaian">
@@ -28,7 +33,8 @@
             </li>
         @endif
 
-        @if($role === 'admin' || $role === 'guru_bk' || $role === 'kepsek' || $role === 'siswa')
+        {{-- Laporan - Semua Role (Admin, Guru BK, Guru, Siswa) --}}
+        @if(in_array($role, ['admin', 'guru_bk', 'guru', 'siswa']))
             <li class="nav-item">
                 <x-sidelink href="{{ route('laporan_siswa') }}" :active="request()->is('laporan_siswa')"
                             data-section="laporan">
@@ -37,11 +43,13 @@
                 </x-sidelink>
             </li>
         @endif
+
+        {{-- Pengguna - Hanya Admin --}}
         @if($role === 'admin')
             <li class="nav-item">
-                <x-sidelink href="{{ route('users.index') }}" :active="request()->is('users.index')"
+                <x-sidelink href="{{ route('users.index') }}" :active="request()->routeIs('users.index')"
                             data-section="users">
-                    <span class="nav-icon">📊</span>
+                    <span class="nav-icon">👤</span>
                     Pengguna
                 </x-sidelink>
             </li>

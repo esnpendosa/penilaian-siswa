@@ -4,12 +4,36 @@
         #myTable {
             width: 100%;
             table-layout: fixed; /* Prevents column width from expanding */
-
         }
 
         .badge-primary {
             background-color: #0056b3 !important; /* Biru gelap */
             color: #ffffff !important;
+        }
+
+        .badge-success {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+        }
+
+        .badge-warning {
+            background-color: #ffc107 !important;
+            color: #212529 !important;
+        }
+
+        .badge-danger {
+            background-color: #dc3545 !important;
+            color: #ffffff !important;
+        }
+
+        .point-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .point-negative {
+            color: #dc3545;
+            font-weight: bold;
         }
 
         .stats-grid {
@@ -170,65 +194,68 @@
             </div>
             <h3 style="padding: 20px; margin: 0; background: #f8f9fa; border-bottom: 1px solid #e0e0e0;">Ranking
                 Siswa</h3>
-            <table class="table" id="myTable">
-                <thead>
-                <tr>
-                    <th>Ranking</th>
-                    <th>Nama</th>
-                    <th>Kelas</th>
-                    <th>Total Poin</th>
-                    <th>Prestasi</th>
-                    <th>Pelanggaran</th>
-                    <th>Status</th>
-                </tr>
-                </thead>
-                <tbody id="tabel-ranking">
-                @foreach ($dataSiswa as $rank => $data)
-                    @php
-                        $rank += 1;
-                    @endphp
+            <div style="overflow-x: auto;">
+                <table class="table" id="myTable">
+                    <thead>
                     <tr>
-                        <td>
-                            @if ($rank == 1)
-                                🥇 {{ $rank }}
-                            @elseif ($rank == 2)
-                                🥈 {{ $rank }}
-                            @elseif ($rank == 3)
-                                🥉 {{ $rank }}
-                            @else
-
-                            @endif
-                        </td>
-                        <td>{{ $data->nama }}</td>
-                        <td>{{ $data->kelas }}</td>
-                        <td><span
-                                class="point-display point-{{ $data->total_poin >= 0 ? 'positive' : 'negative' }}">{{ $data->total_poin }}</span>
-                        </td>
-                        <td>{{ $data->total_prestasi }}</td>
-                        <td>{{ $data->total_pelanggaran }}</td>
-                        <td>
-                            @php
-                                $poin = $data->total_poin;
-                                if ($poin >= 80) {
-                                    $status = ['label' => 'Teladan', 'badge' => 'success'];
-                                } elseif ($poin >= 50) {
-                                    $status = ['label' => 'Baik', 'badge' => 'primary'];
-                                } elseif ($poin >= 20) {
-                                    $status = ['label' => 'Cukup', 'badge' => 'warning'];
-                                } else {
-                                    $status = ['label' => 'Perhatian', 'badge' => 'danger'];
-                                }
-                            @endphp
-
-                            <span class="badge badge-{{ $status['badge'] }}">
-                                {{ $status['label'] }}
-                            </span>
-                        </td>
-
+                        <th>Ranking</th>
+                        <th>Nama</th>
+                        <th>Kelas</th>
+                        <th>Total Poin</th>
+                        <th>Prestasi</th>
+                        <th>Pelanggaran</th>
+                        <th>Status</th>
                     </tr>
-                @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody id="tabel-ranking">
+                    @foreach ($dataSiswa as $rank => $data)
+                        @php
+                            $rank += 1;
+                        @endphp
+                        <tr>
+                            <td>
+                                @if ($rank == 1)
+                                    🥇 {{ $rank }}
+                                @elseif ($rank == 2)
+                                    🥈 {{ $rank }}
+                                @elseif ($rank == 3)
+                                    🥉 {{ $rank }}
+                                @else
+                                    {{ $rank }}
+                                @endif
+                            </td>
+                            <td>{{ $data->nama }}</td>
+                            <td>{{ $data->kelas }}</td>
+                            <td>
+                                <span class="point-display point-{{ $data->total_poin >= 0 ? 'positive' : 'negative' }}">
+                                    {{ $data->total_poin >= 0 ? '+'.$data->total_poin : $data->total_poin }}
+                                </span>
+                            </td>
+                            <td>{{ $data->total_prestasi }}</td>
+                            <td>{{ $data->total_pelanggaran }}</td>
+                            <td>
+                                @php
+                                    $poin = $data->total_poin;
+                                    if ($poin >= 80) {
+                                        $status = ['label' => 'Teladan', 'badge' => 'success'];
+                                    } elseif ($poin >= 50) {
+                                        $status = ['label' => 'Baik', 'badge' => 'primary'];
+                                    } elseif ($poin >= 20) {
+                                        $status = ['label' => 'Cukup', 'badge' => 'warning'];
+                                    } else {
+                                        $status = ['label' => 'Perhatian', 'badge' => 'danger'];
+                                    }
+                                @endphp
+
+                                <span class="badge badge-{{ $status['badge'] }}">
+                                    {{ $status['label'] }}
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
     <script src="https://code.jquery.com/jquery-3.7.1.js"

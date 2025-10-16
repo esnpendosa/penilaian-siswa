@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DataSiswa;
 use App\Models\PenilaianSiswa;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PenilaianSiswaController extends Controller
 {
@@ -13,6 +14,14 @@ class PenilaianSiswaController extends Controller
      */
     public function index()
     {
+        // Cek hak akses - hanya admin, guru_bk, dan guru yang boleh akses
+        $user = Auth::user();
+        $allowedRoles = ['admin', 'guru_bk', 'guru'];
+        
+        if (!in_array($user->role, $allowedRoles)) {
+            return redirect('/non_admin')->with('error', 'Anda tidak memiliki akses ke halaman penilaian.');
+        }
+
         $dataSiswa = DataSiswa::all();
         $penilaianSiswa = PenilaianSiswa::orderByDesc('created_at')->get();
         return view('penilaian', compact('dataSiswa', 'penilaianSiswa'));
@@ -36,6 +45,14 @@ class PenilaianSiswaController extends Controller
 
     public function store(Request $request)
     {
+        // Cek hak akses - hanya admin, guru_bk, dan guru yang boleh akses
+        $user = Auth::user();
+        $allowedRoles = ['admin', 'guru_bk', 'guru'];
+        
+        if (!in_array($user->role, $allowedRoles)) {
+            return redirect('/non_admin')->with('error', 'Anda tidak memiliki akses untuk melakukan penilaian.');
+        }
+
         $validated = $request->validate([
             'nama_siswa' => 'required',
             'jenis' => 'required|in:prestasi,pelanggaran',
@@ -48,7 +65,6 @@ class PenilaianSiswaController extends Controller
             'jenis.required' => 'Jenis penilaian harus dipilih.',
             'jenis.in' => 'Jenis penilaian tidak valid.',
             'kategori.required' => 'Kategori penilaian harus dipilih.',
-            'kategori.in' => 'Kategori tidak valid.',
             'keterangan.required' => 'Keterangan wajib diisi.',
             'keterangan.max' => 'Keterangan maksimal 255 karakter.',
             'poin.required' => 'Kolom poin wajib diisi.',
@@ -59,11 +75,26 @@ class PenilaianSiswaController extends Controller
             'tanggal.date' => 'Format tanggal tidak valid.',
         ]);
 
+        // Validasi kategori berdasarkan jenis
+        if ($request->jenis === 'prestasi') {
+            $allowedKategori = ['akademik', 'nonakademik'];
+            if (!in_array($request->kategori, $allowedKategori)) {
+                return redirect()->back()->withErrors(['kategori' => 'Kategori prestasi tidak valid.'])->withInput();
+            }
+        } elseif ($request->jenis === 'pelanggaran') {
+            $allowedKategori = ['ringan', 'sedang', 'berat'];
+            if (!in_array($request->kategori, $allowedKategori)) {
+                return redirect()->back()->withErrors(['kategori' => 'Kategori pelanggaran tidak valid.'])->withInput();
+            }
+        }
+
         $idSiswa = $request->nama_siswa;
-        $nama = DataSiswa::findOrFail($idSiswa)->first();
-        $namaSiswa = $nama->nama;
+        $siswa = DataSiswa::findOrFail($idSiswa);
+        $namaSiswa = $siswa->nama;
+        
         $validated['nama_siswa'] = $namaSiswa;
         $validated['siswa_id'] = $idSiswa;
+        
         PenilaianSiswa::create($validated);
 
         return redirect()->back()->with('success', 'Data penilaian berhasil disimpan.');
@@ -98,6 +129,14 @@ class PenilaianSiswaController extends Controller
      */
     public function destroy($id)
     {
+        // Cek hak akses - hanya admin, guru_bk, dan guru yang boleh hapus
+        $user = Auth::user();
+        $allowedRoles = ['admin', 'guru_bk', 'guru'];
+        
+        if (!in_array($user->role, $allowedRoles)) {
+            return redirect('/non_admin')->with('error', 'Anda tidak memiliki akses untuk menghapus penilaian.');
+        }
+
         $data = PenilaianSiswa::findOrFail($id);
         $data->delete();
 
